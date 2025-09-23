@@ -22,9 +22,12 @@ const Calculator: React.FC = () => {
     [Drink.FERNET]: 0,
     [Drink.GIN]: 0,
   });
+  const [showWarning, setShowWarning] = useState(false);
 
   const totalBarrels = useMemo(() => {
     const { attendees, drinks, season } = formData;
+    setShowWarning(false); // Reset warning on each calculation
+
     if (!attendees || attendees <= 0 || drinks.length === 0) return 0;
 
     const avgLitersPerPerson = drinks.reduce((sum, d) => sum + LITERS_PER_PERSON[d], 0) / drinks.length;
@@ -35,7 +38,15 @@ const Calculator: React.FC = () => {
     }
 
     const finalLitersWithMargin = totalLiters * SAFETY_MARGIN;
-    return Math.ceil(finalLitersWithMargin / BARREL_CAPACITY);
+    const calculatedBarrels = Math.ceil(finalLitersWithMargin / BARREL_CAPACITY);
+    
+    const minBarrels = drinks.length;
+
+    if (calculatedBarrels > 0 && calculatedBarrels < minBarrels) {
+        setShowWarning(true);
+    }
+
+    return Math.max(calculatedBarrels, minBarrels);
   }, [formData]);
 
   const distributeBarrelsEqually = useCallback((drinks: Drink[], total: number) => {
@@ -71,7 +82,6 @@ const Calculator: React.FC = () => {
   };
 
   const handleBarrelChange = (changedDrink: Drink, newBarrelValue: number) => {
-    // FIX: Explicitly type `newDistribution` to `Record<Drink, number>` to fix type inference errors.
     const newDistribution: Record<Drink, number> = { ...barrelDistribution };
     const cappedValue = Math.max(0, Math.min(newBarrelValue, totalBarrels));
     newDistribution[changedDrink] = cappedValue;
@@ -87,15 +97,16 @@ const Calculator: React.FC = () => {
             newDistribution[drink] = barrelsPerOtherDrink + (index < remainder ? 1 : 0);
         });
     } else if (cappedValue < totalBarrels) {
-        // If only one drink is selected, it must take all barrels
         newDistribution[changedDrink] = totalBarrels;
     }
     
-    // Ensure the sum is correct
     const currentSum = Object.values(newDistribution).reduce((a, b) => a + b, 0);
     if(currentSum !== totalBarrels && formData.drinks.length > 0){
         const diff = totalBarrels - currentSum;
-        newDistribution[formData.drinks[0]] += diff;
+        const firstDrink = formData.drinks.find(d => newDistribution[d] !== undefined) || formData.drinks[0];
+        if(firstDrink) {
+          newDistribution[firstDrink] += diff;
+        }
     }
 
     setBarrelDistribution(newDistribution);
@@ -246,10 +257,15 @@ const Calculator: React.FC = () => {
                         <p>Completa los datos para ver la estimación.</p>
                     </div>
                 )}
+                {showWarning && calculationResult && (
+                    <div className="mt-4 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 text-amber-200 px-4 py-3 rounded-xl text-sm text-center">
+                        <p><strong>⚠️ Atención:</strong> Con esta cantidad de asistentes, un barril por bebida es demasiado. ¡Podrías reducir un poco y ahorrar para la próxima!</p>
+                    </div>
+                )}
             </div>
             <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
-                <p className="font-semibold">Nota importante:</p>
-                <p>Este cálculo incluye un margen de seguridad del 10%. Los valores son estimativos y pueden variar.</p>
+                <p className="font-semibold">Aclaración necesaria:</p>
+                <p>Este cálculo contempla un margen de seguridad del 10%. Los valores son estimativos y pueden variar según el consumo real de cada persona</p>
             </div>
       </div>
     </div>
