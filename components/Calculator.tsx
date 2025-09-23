@@ -71,7 +71,8 @@ const Calculator: React.FC = () => {
   };
 
   const handleBarrelChange = (changedDrink: Drink, newBarrelValue: number) => {
-    const newDistribution = { ...barrelDistribution };
+    // FIX: Explicitly type `newDistribution` to `Record<Drink, number>` to fix type inference errors.
+    const newDistribution: Record<Drink, number> = { ...barrelDistribution };
     const cappedValue = Math.max(0, Math.min(newBarrelValue, totalBarrels));
     newDistribution[changedDrink] = cappedValue;
 
