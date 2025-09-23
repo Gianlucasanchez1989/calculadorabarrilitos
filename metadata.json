@@ -1,0 +1,5 @@
+{
+  "name": "Calculadora de Barriles",
+  "description": "Una aplicación para estimar la cantidad de barriles de 10 litros de bebida necesarios para un evento, considerando varios factores como asistentes, duración, tipo de evento y estación del año.",
+  "requestFramePermissions": []
+}
