@@ -10,12 +10,12 @@ const App: React.FC = () => {
             Calculadora de barriles
           </h1>
           <p className="text-slate-400 text-lg">
-            Viví la experiencia perfecta con la cantidad ideal de bebida.
+            Viví la experiencia perfecta con la cantidad ideal de bebida - by Pump Barrilito
           </p>
         </header>
         <Calculator />
-        <footer className="text-center mt-8 text-slate-500">
-          <p>Creado por Gianluca Sanchez</p>
+        <footer className="text-center mt-8 text-slate-500 text-sm">
+          <p>Creado por Gianluca Sanchez para <strong className="font-bold">PUMP Barrilito</strong>.</p>
         </footer>
       </div>
     </main>
