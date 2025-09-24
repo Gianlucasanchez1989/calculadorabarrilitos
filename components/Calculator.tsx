@@ -13,7 +13,11 @@ import {
   MAX_ATTENDEES_FOR_CALC,
 } from '../constants';
 
-const Calculator: React.FC = () => {
+interface CalculatorProps {
+  onTotalBarrelsChange: (barrels: number) => void;
+}
+
+const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const [formData, setFormData] = useState<FormData>({
     attendees: MIN_ATTENDEES,
     drinks: [Drink.BEER],
@@ -57,6 +61,10 @@ const Calculator: React.FC = () => {
     setShowWarning(false);
     return calculatedBarrels;
   }, [formData]);
+  
+  useEffect(() => {
+    onTotalBarrelsChange(totalBarrels);
+  }, [totalBarrels, onTotalBarrelsChange]);
 
   const distributeBarrelsEqually = useCallback((drinks: Drink[], total: number) => {
     const newDistribution: Record<Drink, number> = {
