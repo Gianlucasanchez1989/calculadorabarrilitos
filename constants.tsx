@@ -5,18 +5,22 @@ import { Drink, Season } from './types';
 
 /**
  * Litros estimados por persona, basado en la retroalimentación del usuario.
- * Cerveza: 1 barril (10L) cada 5 personas = 2 L/persona.
- * Fernet/Gin: 1 barril (10L) cada 8 personas = 1.25 L/persona.
+ * Cerveza: 1 barril (10L) cada 8 personas = 1.25 L/persona.
+ * Fernet/Gin: 1 barril (10L) cada 12 personas = ~0.83 L/persona.
  */
 export const LITERS_PER_PERSON: { [key in Drink]: number } = {
-  [Drink.BEER]: 2,
-  [Drink.FERNET]: 1.25,
-  [Drink.GIN]: 1.25,
+  [Drink.BEER]: 10 / 8,
+  [Drink.FERNET]: 10 / 12,
+  [Drink.GIN]: 10 / 12,
 };
 
 export const WINTER_CONSUMPTION_MULTIPLIER = 0.8; // 20% less
 export const SAFETY_MARGIN = 1.1; // 10% extra
 export const BARREL_CAPACITY = 10; // 10 liters
+
+export const MIN_ATTENDEES = 5;
+export const MAX_ATTENDEES_FOR_CALC = 100;
+
 
 // --- Form Options ---
 

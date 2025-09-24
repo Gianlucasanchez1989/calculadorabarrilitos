@@ -9,12 +9,14 @@ import {
   WINTER_CONSUMPTION_MULTIPLIER,
   UsersIcon,
   DRINK_ICONS,
+  MIN_ATTENDEES,
+  MAX_ATTENDEES_FOR_CALC,
 } from '../constants';
 
 const Calculator: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
-    attendees: 50,
-    drinks: [Drink.BEER, Drink.FERNET],
+    attendees: MIN_ATTENDEES,
+    drinks: [Drink.BEER],
     season: Season.SPRING_SUMMER,
   });
   const [barrelDistribution, setBarrelDistribution] = useState<Record<Drink, number>>({
@@ -22,13 +24,19 @@ const Calculator: React.FC = () => {
     [Drink.FERNET]: 0,
     [Drink.GIN]: 0,
   });
-  const [showWarning, setShowWarning] = useState(false);
+  const [attendeesInput, setAttendeesInput] = useState<string>(MIN_ATTENDEES.toString());
+  const [attendeesError, setAttendeesError] = useState<string | null>(null);
+  const [showWarning, setShowWarning] = useState<boolean>(false);
+
+  const isEventTooLarge = formData.attendees > MAX_ATTENDEES_FOR_CALC;
 
   const totalBarrels = useMemo(() => {
     const { attendees, drinks, season } = formData;
-    setShowWarning(false); // Reset warning on each calculation
 
-    if (!attendees || attendees <= 0 || drinks.length === 0) return 0;
+    if (!attendees || attendees < MIN_ATTENDEES || drinks.length === 0) {
+        setShowWarning(false);
+        return 0;
+    }
 
     const avgLitersPerPerson = drinks.reduce((sum, d) => sum + LITERS_PER_PERSON[d], 0) / drinks.length;
     let totalLiters = attendees * avgLitersPerPerson;
@@ -40,13 +48,14 @@ const Calculator: React.FC = () => {
     const finalLitersWithMargin = totalLiters * SAFETY_MARGIN;
     const calculatedBarrels = Math.ceil(finalLitersWithMargin / BARREL_CAPACITY);
     
-    const minBarrels = drinks.length;
-
-    if (calculatedBarrels > 0 && calculatedBarrels < minBarrels) {
+    const minRequiredBarrels = drinks.length;
+    if (calculatedBarrels > 0 && calculatedBarrels < minRequiredBarrels) {
         setShowWarning(true);
+        return minRequiredBarrels;
     }
 
-    return Math.max(calculatedBarrels, minBarrels);
+    setShowWarning(false);
+    return calculatedBarrels;
   }, [formData]);
 
   const distributeBarrelsEqually = useCallback((drinks: Drink[], total: number) => {
@@ -68,6 +77,39 @@ const Calculator: React.FC = () => {
   useEffect(() => {
     distributeBarrelsEqually(formData.drinks, totalBarrels);
   }, [formData.drinks, totalBarrels, distributeBarrelsEqually]);
+
+  const handleAttendeesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAttendeesInput(value);
+
+    if (value === '') {
+        setAttendeesError(null);
+        setFormData(prev => ({ ...prev, attendees: 0 }));
+        return;
+    }
+
+    const numValue = parseInt(value, 10);
+    
+    if (!isNaN(numValue)) {
+        if (numValue > 0 && numValue < MIN_ATTENDEES) {
+             setAttendeesError(`El mínimo es de ${MIN_ATTENDEES} asistentes.`);
+        } else {
+             setAttendeesError(null);
+        }
+        setFormData(prev => ({ ...prev, attendees: numValue }));
+    } else {
+        setFormData(prev => ({ ...prev, attendees: 0 }));
+    }
+  };
+  
+  const handleAttendeesBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      const numValue = parseInt(e.target.value, 10);
+      if (isNaN(numValue) || numValue < MIN_ATTENDEES) {
+          setAttendeesInput(MIN_ATTENDEES.toString());
+          setFormData(prev => ({ ...prev, attendees: MIN_ATTENDEES }));
+          setAttendeesError(null);
+      }
+  };
 
   const handleDrinkChange = (drink: Drink) => {
     setFormData((prev) => {
@@ -130,42 +172,40 @@ const Calculator: React.FC = () => {
     };
   }, [formData.drinks, barrelDistribution, totalBarrels]);
 
-  const InputField = ({ id, label, value, onChange, icon, min = 1, max=1000 }: { id: string, label: string, value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, icon: React.ReactNode, min?: number, max?:number }) => (
-    <div className="flex flex-col space-y-2">
-        <label htmlFor={id} className="text-sm font-medium text-slate-300">{label}</label>
-        <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                {icon}
-            </span>
-            <input
-                type="number"
-                id={id}
-                value={value}
-                onChange={onChange}
-                min={min}
-                max={max}
-                className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition"
-            />
-        </div>
-    </div>
-  );
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Form Section */}
       <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-slate-700 space-y-6">
-        <h2 className="text-2xl font-bold text-slate-100">Detalles del evento</h2>
+        <h2 className="text-2xl font-bold text-slate-100">Armá tu calculo</h2>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <InputField 
-                id="attendees"
-                label="Cantidad de asistentes"
-                value={formData.attendees}
-                onChange={e => setFormData({ ...formData, attendees: parseInt(e.target.value, 10) || 0 })}
-                icon={<UsersIcon />}
-            />
+            <div className="flex flex-col space-y-2">
+                <label htmlFor="attendees" className="text-sm font-medium text-slate-300">Cantidad de asistentes</label>
+                <div className="relative mt-1">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <UsersIcon />
+                    </span>
+                    <input
+                        type="number"
+                        id="attendees"
+                        value={attendeesInput}
+                        onChange={handleAttendeesChange}
+                        onBlur={handleAttendeesBlur}
+                        onFocus={(e) => e.target.select()}
+                        className={`w-full pl-10 pr-4 py-2 bg-slate-700 border rounded-md shadow-sm transition ${attendeesError ? 'border-red-500 text-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-600 focus:ring-emerald-500 focus:border-emerald-500'}`}
+                        aria-invalid={!!attendeesError}
+                        aria-describedby="attendees-error"
+                    />
+                </div>
+                 {attendeesError && (
+                    <p id="attendees-error" className="text-xs text-red-400" role="alert">
+                        {attendeesError}
+                    </p>
+                )}
+            </div>
 
             <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-slate-300">Época del año</label>
+                <p className="text-xs text-slate-400">El calor o el frío afectan el consumo. Elegí la temporada.</p>
                 <div className="grid grid-cols-2 gap-2">
                     {SEASON_OPTIONS.map(season => (
                         <button
@@ -196,12 +236,17 @@ const Calculator: React.FC = () => {
                 </div>
             </div>
 
-            {formData.drinks.length > 1 && totalBarrels > 0 && (
+            {formData.drinks.length > 1 && totalBarrels > 0 && !isEventTooLarge && (
                  <div className="bg-slate-900/50 p-4 rounded-lg space-y-4">
                     <div className="flex justify-between items-center">
                          <p className="text-sm font-medium text-slate-300">Distribución de barriles</p>
                          <button type="button" onClick={() => distributeBarrelsEqually(formData.drinks, totalBarrels)} className="text-xs bg-emerald-500 text-white font-semibold rounded-md px-3 py-1 hover:bg-emerald-600 transition">Distribuir equitativamente</button>
                     </div>
+                     {showWarning && (
+                        <div className="bg-amber-900/50 border border-amber-700 text-amber-200 text-xs rounded-md p-3">
+                            <p>⚠️ Atención: Con esta cantidad de asistentes, un barril por bebida es demasiado. ¡Podrías reducir un poco y ahorrar para la próxima!</p>
+                        </div>
+                    )}
                     <div className="space-y-4 pt-2">
                         {formData.drinks.map(drink => (
                             <div key={drink} className="flex items-center gap-4">
@@ -230,43 +275,47 @@ const Calculator: React.FC = () => {
       </div>
 
       {/* Results Section */}
-       <div className="bg-gradient-to-br from-emerald-500 to-sky-600 p-6 rounded-2xl shadow-2xl flex flex-col justify-between text-white">
-            <div>
-                <h2 className="text-2xl font-bold text-center mb-4">Resultado de la estimación</h2>
-                {calculationResult ? (
-                    <div className="space-y-4">
-                        <div className="bg-black/20 p-4 rounded-lg space-y-3">
-                             <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Desglose por bebida</h3>
-                            {calculationResult.breakdown.map(({ drink, barrels }) => (
-                                <div key={drink} className="flex justify-between items-baseline">
-                                    <span className="font-medium text-slate-100">{DRINK_ICONS[drink]} {drink}:</span>
-                                    <span className="text-right">
-                                        <strong className="text-xl font-bold">{barrels}</strong> barriles
-                                    </span>
+       <div className="bg-gradient-to-br from-emerald-500 to-sky-600 p-6 rounded-2xl shadow-2xl flex flex-col text-white">
+            {isEventTooLarge ? (
+                <div className="text-center">
+                    <p className="text-2xl mb-4">🚨 Tu evento es grande 🚀</p>
+                    <p className="text-slate-100">Te recomendamos consultar con Pump Barrilito para asesorarte sobre promociones y barriles de mayor capacidad.</p>
+                </div>
+            ) : (
+                <>
+                    <div>
+                        <h2 className="text-2xl font-bold text-center mb-4">Resultado de la estimación</h2>
+                        {calculationResult ? (
+                            <div className="space-y-4">
+                                <div className="text-center bg-black/30 p-4 rounded-lg">
+                                    <p className="text-lg text-sky-100">Total estimado</p>
+                                    <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
+                                    <p className="text-xl font-bold text-sky-100">barriles de 10 L</p>
                                 </div>
-                            ))}
-                        </div>
-                        <div className="text-center bg-black/30 p-4 rounded-lg">
-                            <p className="text-lg text-sky-100">Total estimado</p>
-                            <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
-                            <p className="text-xl font-bold text-sky-100">barriles de 10 L</p>
-                        </div>
+                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
+                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Desglose por bebida</h3>
+                                    {calculationResult.breakdown.map(({ drink, barrels }) => (
+                                        <div key={drink} className="flex justify-between items-baseline">
+                                            <span className="font-medium text-slate-100">{DRINK_ICONS[drink]} {drink}:</span>
+                                            <span className="text-right">
+                                                <strong className="text-xl font-bold">{barrels}</strong> barriles
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center text-slate-100 h-full flex items-center justify-center flex-col min-h-[250px]">
+                                <p>Completa los datos para ver la estimación.</p>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="text-center text-slate-100 h-full flex items-center justify-center flex-col min-h-[250px]">
-                        <p>Completa los datos para ver la estimación.</p>
+                    <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
+                        <p className="font-semibold">Aclaración necesaria:</p>
+                        <p>Este cálculo contempla un margen de seguridad del 10%. Los valores son estimativos y pueden variar según el consumo real de cada persona</p>
                     </div>
-                )}
-                {showWarning && calculationResult && (
-                    <div className="mt-4 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 text-amber-200 px-4 py-3 rounded-xl text-sm text-center">
-                        <p><strong>⚠️ Atención:</strong> Con esta cantidad de asistentes, un barril por bebida es demasiado. ¡Podrías reducir un poco y ahorrar para la próxima!</p>
-                    </div>
-                )}
-            </div>
-            <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
-                <p className="font-semibold">Aclaración necesaria:</p>
-                <p>Este cálculo contempla un margen de seguridad del 10%. Los valores son estimativos y pueden variar según el consumo real de cada persona</p>
-            </div>
+                </>
+            )}
       </div>
     </div>
   );
