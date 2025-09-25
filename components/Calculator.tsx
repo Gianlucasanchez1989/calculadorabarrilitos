@@ -193,7 +193,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   }, [formData.drinks, barrelDistribution, totalBarrels]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:items-start">
       {/* Form Section */}
       <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-slate-700 space-y-6">
         <h2 className="text-2xl font-bold text-slate-100">Armá tu calculo</h2>
@@ -327,7 +327,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center text-slate-100 h-full flex items-center justify-center flex-col min-h-[250px]">
+                            <div className="text-center text-slate-100 flex items-center justify-center flex-col min-h-[250px]">
                                 <p>Completa los datos para ver la estimación.</p>
                             </div>
                         )}
