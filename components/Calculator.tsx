@@ -276,7 +276,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 <div className="flex-1">
                                     <div className="flex justify-between text-sm mb-1">
                                         <span className="font-medium text-slate-300">{drink}</span>
-                                        <span className="font-bold text-emerald-400">{barrelDistribution[drink] || 0} barriles</span>
+                                        <span className="font-bold text-emerald-400">{barrelDistribution[drink] || 0} {(barrelDistribution[drink] || 0) === 1 ? 'barril' : 'barriles'}</span>
                                     </div>
                                     <input
                                         type="range"
@@ -312,7 +312,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 <div className="text-center bg-black/30 p-4 rounded-lg">
                                     <p className="text-lg text-sky-100">Vas a necesitar aproximadamente:</p>
                                     <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
-                                    <p className="text-xl font-bold text-sky-100">Barriles de 10 L</p>
+                                    <p className="text-xl font-bold text-sky-100">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
                                 </div>
                                 <div className="bg-black/20 p-4 rounded-lg space-y-3">
                                     <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Desglose por bebida</h3>
@@ -320,7 +320,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                         <div key={drink} className="flex justify-between items-baseline">
                                             <span className="font-medium text-slate-100">{DRINK_ICONS[drink]} {drink}:</span>
                                             <span className="text-right">
-                                                <strong className="text-xl font-bold">{barrels}</strong> barriles
+                                                <strong className="text-xl font-bold">{barrels}</strong> {barrels === 1 ? 'barril' : 'barriles'}
                                             </span>
                                         </div>
                                     ))}
