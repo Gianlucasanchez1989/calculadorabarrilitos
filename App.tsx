@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Calculator from './components/Calculator';
-import EnvironmentalImpact from './components/EnvironmentalImpact';
 
 const App: React.FC = () => {
   const [totalBarrels, setTotalBarrels] = useState(0);
@@ -17,7 +16,6 @@ const App: React.FC = () => {
           </p>
         </header>
         <Calculator onTotalBarrelsChange={setTotalBarrels} />
-        <EnvironmentalImpact totalBarrels={totalBarrels} />
         <footer className="text-center mt-12 text-slate-500 text-sm">
           <p>Creado por Gianluca Sanchez para <strong className="font-bold">PUMP Barrilito</strong>.</p>
         </footer>
