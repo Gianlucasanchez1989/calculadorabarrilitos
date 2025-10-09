@@ -25,9 +25,17 @@ const WhatsAppIcon = () => (
 
 const InstagramIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/>
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664 4.771 4.919 4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/>
     </svg>
 );
+
+const ClipboardIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+    </svg>
+);
+
 
 const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const [formData, setFormData] = useState<FormData>({
@@ -43,8 +51,39 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const [attendeesInput, setAttendeesInput] = useState<string>(MIN_ATTENDEES.toString());
   const [attendeesError, setAttendeesError] = useState<string | null>(null);
   const [showWarning, setShowWarning] = useState<boolean>(false);
-
+  const [prices, setPrices] = useState<Record<string, number> | null>(null);
+  const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(true);
+  const [isCopied, setIsCopied] = useState(false);
+  
   const isEventTooLarge = formData.attendees > MAX_ATTENDEES_FOR_CALC;
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+        try {
+            const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRzBXKoYgw1cRrhr4VTIQLEfQ30NrCGlmDIgacvLoUYN_eTnnZ7qMvdxVMNhqHIrg6cwchewxYUesv_/pub?gid=0&single=true&output=csv');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const csvText = await response.text();
+            const lines = csvText.trim().split('\n').slice(1); // Skip header
+            const priceData: Record<string, number> = {};
+            lines.forEach(line => {
+                const [product, price] = line.split(',');
+                if (product && price) {
+                    priceData[product.trim()] = parseInt(price.trim(), 10);
+                }
+            });
+            setPrices(priceData);
+        } catch (error) {
+            console.error("Failed to fetch prices:", error);
+            // Optionally, set an error state to show a message to the user
+        } finally {
+            setIsLoadingPrices(false);
+        }
+    };
+
+    fetchPrices();
+  }, []);
 
   const totalBarrels = useMemo(() => {
     const { attendees, drinks, season } = formData;
@@ -175,7 +214,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   };
   
   const calculationResult: CalculationResult | null = useMemo(() => {
-    if (totalBarrels <= 0) return null;
+    if (totalBarrels <= 0 || !prices) return null;
 
     const breakdown: DrinkCalculation[] = formData.drinks.map(drink => ({
         drink,
@@ -184,13 +223,84 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
     }));
     
     const totalLiters = breakdown.reduce((sum, item) => sum + item.liters, 0);
+    const totalPrice = breakdown.reduce((sum, { drink, barrels }) => {
+        const pricePerBarrel = prices[drink] || 0;
+        return sum + (barrels * pricePerBarrel);
+    }, 0);
 
     return {
       breakdown,
       totalLiters,
       totalBarrels,
+      totalPrice,
     };
-  }, [formData.drinks, barrelDistribution, totalBarrels]);
+  }, [formData.drinks, barrelDistribution, totalBarrels, prices]);
+
+  const orderText = useMemo(() => {
+    if (!calculationResult || calculationResult.totalBarrels <= 0) {
+        return null;
+    }
+
+    const { breakdown, totalPrice } = calculationResult;
+    const productsWithBarrels = breakdown.filter(item => item.barrels > 0);
+    
+    const productsText = productsWithBarrels
+        .map(item => item.drink)
+        .join(', ');
+
+    const quantityText = productsWithBarrels
+        .map(item => `${item.barrels} ${item.barrels === 1 ? 'barril' : 'barriles'} de ${item.drink}`)
+        .join(', ');
+
+    const priceText = totalPrice.toLocaleString('es-AR', { minimumFractionDigits: 0 });
+
+    const textParts = [
+        "Hola, quiero encargar:",
+        `Producto: ${productsText}`,
+        `Cantidad: ${quantityText}`,
+        `Total estimado: $${priceText}`,
+        "",
+        "¡Gracias!"
+    ];
+
+    return textParts.join('\n');
+  }, [calculationResult]);
+
+  const whatsappLink = useMemo(() => {
+    const baseUrl = "https://wa.me/5493425521278";
+    if (!orderText) {
+        return baseUrl;
+    }
+    return `${baseUrl}?text=${encodeURIComponent(orderText)}`;
+  }, [orderText]);
+
+  const handleCopyClick = () => {
+    if (!orderText || isCopied) return;
+
+    navigator.clipboard.writeText(orderText).then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+    }).catch(err => {
+        console.error("Failed to copy text: ", err);
+    });
+  };
+
+  const clarificationText = useMemo(() => {
+    if (!calculationResult || calculationResult.totalBarrels <= 0) {
+      return null;
+    }
+    const { totalBarrels } = calculationResult;
+    const isSingular = totalBarrels === 1;
+    
+    const kits = isSingular ? 'kit' : 'kits';
+    const completos = isSingular ? 'completo' : 'completos';
+    const barriles = isSingular ? 'barril' : 'barriles';
+    const canillas = isSingular ? 'canilla' : 'canillas';
+    const colders = isSingular ? 'colder' : 'colders';
+
+    return `El precio mostrado corresponde a ${totalBarrels} ${kits} ${completos}: ${barriles}, ${canillas}, ${colders} + regalos. Podés ajustar los kits como quieras, escribinos.`;
+  }, [calculationResult]);
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:items-start">
@@ -314,6 +424,12 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                     <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
                                     <p className="text-xl font-bold text-sky-100">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
                                 </div>
+                                <div className="text-center bg-black/30 p-4 rounded-lg">
+                                    <p className="text-lg text-sky-100">Precio total estimado:</p>
+                                    <p className="text-4xl font-extrabold tracking-tighter my-1">
+                                        {calculationResult.totalPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })}
+                                    </p>
+                                </div>
                                 <div className="bg-black/20 p-4 rounded-lg space-y-3">
                                     <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Desglose por bebida</h3>
                                     {calculationResult.breakdown.filter(({ barrels }) => barrels > 0).map(({ drink, barrels }) => (
@@ -328,18 +444,20 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                             </div>
                         ) : (
                             <div className="text-center text-slate-100 flex items-center justify-center flex-col min-h-[250px]">
-                                <p>Completa los datos para ver la estimación.</p>
+                                {isLoadingPrices ? <p>Cargando precios actualizados...</p> : <p>Completa los datos para ver la estimación.</p>}
                             </div>
                         )}
                     </div>
                     <div>
-                        <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
-                            <p className="font-semibold">Aclaración necesaria:</p>
-                            <p>Los números son orientativos: calculados con un consumo un poco mayor al moderado, pero siempre dependen de cada persona.</p>
-                        </div>
-                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {clarificationText && (
+                            <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
+                                <p className="font-semibold">Aclaración:</p>
+                                <p>{clarificationText}</p>
+                            </div>
+                        )}
+                        <div className="mt-6 flex flex-col gap-4">
                              <a
-                                href="https://wa.me/5493425521278"
+                                href={whatsappLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg"
@@ -347,7 +465,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 <WhatsAppIcon />
                                 <span>Pedir por WhatsApp</span>
                             </a>
-                             <a
+                            <a
                                 href="https://www.instagram.com/pumpbarrilito/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -356,6 +474,14 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 <InstagramIcon />
                                 <span>Pedir por Instagram</span>
                             </a>
+                             <button
+                                onClick={handleCopyClick}
+                                disabled={!orderText || isCopied}
+                                className="flex items-center justify-center gap-3 w-full bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700"
+                            >
+                                <ClipboardIcon />
+                                <span>{isCopied ? 'Pedido copiado ✅' : 'Copiar pedido'}</span>
+                            </button>
                         </div>
                     </div>
                 </>

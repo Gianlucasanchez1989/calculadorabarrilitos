@@ -26,4 +26,5 @@ export interface CalculationResult {
   breakdown: DrinkCalculation[];
   totalLiters: number;
   totalBarrels: number;
+  totalPrice: number;
 }
