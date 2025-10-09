@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Drink, FormData, CalculationResult, Season, DrinkCalculation } from '../types';
+import { Drink, FormData, CalculationResult, Season, DrinkCalculation, ProductPrice } from '../types';
 import {
   LITERS_PER_PERSON,
   SAFETY_MARGIN,
@@ -17,6 +17,8 @@ interface CalculatorProps {
   onTotalBarrelsChange: (barrels: number) => void;
 }
 
+type CalculationMode = 'oneTapPerDrink' | 'kit' | 'barrelOnly';
+
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.371-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01s-.521.074-.794.371c-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
@@ -25,7 +27,7 @@ const WhatsAppIcon = () => (
 
 const InstagramIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664 4.771 4.919 4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/>
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664 4.771 4.919 4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059 1.281.073 1.689.073-4.947s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/>
     </svg>
 );
 
@@ -51,9 +53,10 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const [attendeesInput, setAttendeesInput] = useState<string>(MIN_ATTENDEES.toString());
   const [attendeesError, setAttendeesError] = useState<string | null>(null);
   const [showWarning, setShowWarning] = useState<boolean>(false);
-  const [prices, setPrices] = useState<Record<string, number> | null>(null);
+  const [prices, setPrices] = useState<Record<string, ProductPrice> | null>(null);
   const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(true);
   const [isCopied, setIsCopied] = useState(false);
+  const [calculationMode, setCalculationMode] = useState<CalculationMode>('kit');
   
   const isEventTooLarge = formData.attendees > MAX_ATTENDEES_FOR_CALC;
 
@@ -66,11 +69,18 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
             }
             const csvText = await response.text();
             const lines = csvText.trim().split('\n').slice(1); // Skip header
-            const priceData: Record<string, number> = {};
+            const priceData: Record<string, ProductPrice> = {};
             lines.forEach(line => {
-                const [product, price] = line.split(',');
-                if (product && price) {
-                    priceData[product.trim()] = parseInt(price.trim(), 10);
+                const columns = line.split(',');
+                if (columns.length >= 4) {
+                    const product = columns[0].trim();
+                    const barrelPrice = parseInt(columns[1].trim(), 10) || 0;
+                    const kitPrice = parseInt(columns[2].trim(), 10) || 0;
+                    const stock = parseInt(columns[3].trim(), 10) || 0;
+                    
+                    if (product) {
+                        priceData[product] = { barrelPrice, kitPrice, stock };
+                    }
                 }
             });
             setPrices(priceData);
@@ -136,6 +146,19 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   useEffect(() => {
     distributeBarrelsEqually(formData.drinks, totalBarrels);
   }, [formData.drinks, totalBarrels, distributeBarrelsEqually]);
+
+  const showOneTapPerDrinkOption = useMemo(() => {
+    // The option is available only if at least one selected drink has more than one barrel.
+    return formData.drinks.some(drink => (barrelDistribution[drink] || 0) > 1);
+  }, [formData.drinks, barrelDistribution]);
+  
+  useEffect(() => {
+    // If "one tap per drink" is selected but the option is no longer visible,
+    // reset to a default valid option ('kit').
+    if (!showOneTapPerDrinkOption && calculationMode === 'oneTapPerDrink') {
+        setCalculationMode('kit');
+    }
+  }, [showOneTapPerDrinkOption, calculationMode]);
 
   const handleAttendeesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -216,55 +239,113 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const calculationResult: CalculationResult | null = useMemo(() => {
     if (totalBarrels <= 0 || !prices) return null;
 
-    const breakdown: DrinkCalculation[] = formData.drinks.map(drink => ({
-        drink,
-        barrels: barrelDistribution[drink] || 0,
-        liters: (barrelDistribution[drink] || 0) * BARREL_CAPACITY,
-    }));
+    let breakdown: DrinkCalculation[] = [];
+    let totalPrice = 0;
+    let totalCanillas = 0;
     
-    const totalLiters = breakdown.reduce((sum, item) => sum + item.liters, 0);
-    const totalPrice = breakdown.reduce((sum, { drink, barrels }) => {
-        const pricePerBarrel = prices[drink] || 0;
-        return sum + (barrels * pricePerBarrel);
-    }, 0);
+    const drinksWithBarrels = formData.drinks.filter(d => (barrelDistribution[d] || 0) > 0);
+    const isDiscountApplied = calculationMode === 'kit' || (calculationMode === 'oneTapPerDrink' && drinksWithBarrels.length > 0);
 
-    return {
-      breakdown,
-      totalLiters,
-      totalBarrels,
-      totalPrice,
-    };
-  }, [formData.drinks, barrelDistribution, totalBarrels, prices]);
 
-  const orderText = useMemo(() => {
-    if (!calculationResult || calculationResult.totalBarrels <= 0) {
-        return null;
+    switch (calculationMode) {
+        case 'kit':
+            totalCanillas = totalBarrels; // Each kit includes a canilla
+            drinksWithBarrels.forEach(drink => {
+                const barrels = barrelDistribution[drink] || 0;
+                const pricePerKit = prices[drink]?.kitPrice || 0;
+                const subtotal = barrels * pricePerKit;
+                breakdown.push({
+                    drink,
+                    barrels,
+                    liters: barrels * BARREL_CAPACITY,
+                    subtotal,
+                    description: 'Kit completo(s)',
+                });
+                totalPrice += subtotal;
+            });
+            break;
+
+        case 'barrelOnly':
+            totalCanillas = 0;
+            drinksWithBarrels.forEach(drink => {
+                const barrels = barrelDistribution[drink] || 0;
+                const pricePerBarrel = prices[drink]?.barrelPrice || 0;
+                const subtotal = barrels * pricePerBarrel;
+                breakdown.push({
+                    drink,
+                    barrels,
+                    liters: barrels * BARREL_CAPACITY,
+                    subtotal,
+                    description: 'Barril(es) solo(s)',
+                });
+                totalPrice += subtotal;
+            });
+            break;
+
+        case 'oneTapPerDrink':
+        default:
+            totalCanillas = drinksWithBarrels.length;
+            drinksWithBarrels.forEach(drink => {
+                const barrels = barrelDistribution[drink] || 0;
+                if (barrels === 0) return;
+
+                const pricePerKit = prices[drink]?.kitPrice || 0;
+                const pricePerBarrel = prices[drink]?.barrelPrice || 0;
+
+                const subtotal = (1 * pricePerKit) + (Math.max(0, barrels - 1) * pricePerBarrel);
+                
+                const description = barrels === 1 ? '1 Kit completo' : `1 Kit + ${barrels - 1} barril(es)`;
+
+                breakdown.push({
+                    drink,
+                    barrels,
+                    liters: barrels * BARREL_CAPACITY,
+                    subtotal,
+                    description,
+                });
+                totalPrice += subtotal;
+            });
+            break;
     }
 
+    const totalLiters = breakdown.reduce((sum, item) => sum + item.liters, 0);
+
+    return {
+        breakdown,
+        totalLiters,
+        totalBarrels,
+        totalCanillas,
+        totalPrice,
+        isDiscountApplied,
+    };
+  }, [formData.drinks, barrelDistribution, totalBarrels, prices, calculationMode]);
+
+  const needsBiggerChopera = useMemo(() => {
+    // FIX: Explicitly type `barrels` as `number` to resolve a TypeScript type inference issue.
+    return Object.values(barrelDistribution).some((barrels: number) => barrels > 3);
+  }, [barrelDistribution]);
+
+  const orderText = useMemo(() => {
+    if (!calculationResult) return null;
+    
     const { breakdown, totalPrice } = calculationResult;
     const productsWithBarrels = breakdown.filter(item => item.barrels > 0);
+
+    const productsText = productsWithBarrels.map(item => item.drink).join(', ');
+    const quantityTextParts = productsWithBarrels.map(item => `${item.barrels}x ${item.drink} (${item.description})`);
     
-    const productsText = productsWithBarrels
-        .map(item => item.drink)
-        .join(', ');
-
-    const quantityText = productsWithBarrels
-        .map(item => `${item.barrels} ${item.barrels === 1 ? 'barril' : 'barriles'} de ${item.drink}`)
-        .join(', ');
-
+    const quantityText = quantityTextParts.join(' + ');
     const priceText = totalPrice.toLocaleString('es-AR', { minimumFractionDigits: 0 });
 
-    const textParts = [
+    return [
         "Hola, quiero encargar:",
-        `Producto: ${productsText}`,
-        `Cantidad: ${quantityText}`,
+        `Producto(s): ${productsText}`,
+        `Detalle: ${quantityText}`,
         `Total estimado: $${priceText}`,
         "",
         "¡Gracias!"
-    ];
-
-    return textParts.join('\n');
-  }, [calculationResult]);
+    ].join('\n');
+}, [calculationResult]);
 
   const whatsappLink = useMemo(() => {
     const baseUrl = "https://wa.me/5493425521278";
@@ -284,23 +365,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
         console.error("Failed to copy text: ", err);
     });
   };
-
-  const clarificationText = useMemo(() => {
-    if (!calculationResult || calculationResult.totalBarrels <= 0) {
-      return null;
-    }
-    const { totalBarrels } = calculationResult;
-    const isSingular = totalBarrels === 1;
-    
-    const kits = isSingular ? 'kit' : 'kits';
-    const completos = isSingular ? 'completo' : 'completos';
-    const barriles = isSingular ? 'barril' : 'barriles';
-    const canillas = isSingular ? 'canilla' : 'canillas';
-    const colders = isSingular ? 'colder' : 'colders';
-
-    return `El precio mostrado corresponde a ${totalBarrels} ${kits} ${completos}: ${barriles}, ${canillas}, ${colders} + regalos. Podés ajustar los kits como quieras, escribinos.`;
-  }, [calculationResult]);
-
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:items-start">
@@ -424,23 +488,73 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                     <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
                                     <p className="text-xl font-bold text-sky-100">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
                                 </div>
+
+                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
+                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex items-center">
+                                            <input type="radio" id="calcModeBarrel" name="calculationMode" value="barrelOnly" checked={calculationMode === 'barrelOnly'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
+                                            <label htmlFor="calcModeBarrel" className="ml-2 block text-slate-100">Barril solo</label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input type="radio" id="calcModeKit" name="calculationMode" value="kit" checked={calculationMode === 'kit'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
+                                            <label htmlFor="calcModeKit" className="ml-2 block text-slate-100">Kit completo(s)</label>
+                                        </div>
+                                        {showOneTapPerDrinkOption && (
+                                            <div className="flex items-center">
+                                                <input type="radio" id="calcModeOneTap" name="calculationMode" value="oneTapPerDrink" checked={calculationMode === 'oneTapPerDrink'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
+                                                <label htmlFor="calcModeOneTap" className="ml-2 block text-slate-100">Una canilla por bebida</label>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
+                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Resumen del pedido</h3>
+                                    {calculationResult.breakdown.filter(({ barrels }) => barrels > 0).map(({ drink, barrels, subtotal, description }) => (
+                                        <div key={drink} className="border-b border-white/10 pb-2 last:border-b-0 last:pb-0">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-medium text-slate-100">{DRINK_ICONS[drink]} {drink} ({barrels}x)</span>
+                                                <span className="font-bold text-lg text-white">
+                                                    {subtotal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-sky-200 pl-7">{description}</p>
+                                            {description.toLowerCase().includes('kit') && (
+                                                <p className="text-xs text-emerald-300 pl-7 mt-1">Incluye: barril + canilla + colder + regalos</p>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                     {calculationResult.isDiscountApplied && (
+                                        <div className="text-center pt-2">
+                                            <span className="text-sm font-bold text-emerald-300 bg-emerald-900/50 px-3 py-1 rounded-full">Descuento de kit completo aplicado ✅</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
                                 <div className="text-center bg-black/30 p-4 rounded-lg">
                                     <p className="text-lg text-sky-100">Precio total estimado:</p>
                                     <p className="text-4xl font-extrabold tracking-tighter my-1">
                                         {calculationResult.totalPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })}
                                     </p>
                                 </div>
-                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
-                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Desglose por bebida</h3>
-                                    {calculationResult.breakdown.filter(({ barrels }) => barrels > 0).map(({ drink, barrels }) => (
-                                        <div key={drink} className="flex justify-between items-baseline">
-                                            <span className="font-medium text-slate-100">{DRINK_ICONS[drink]} {drink}:</span>
-                                            <span className="text-right">
-                                                <strong className="text-xl font-bold">{barrels}</strong> {barrels === 1 ? 'barril' : 'barriles'}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+
+                                {needsBiggerChopera && (
+                                     <div className="mt-4 bg-amber-800/60 border border-amber-600 text-amber-100 text-sm rounded-lg p-4 text-center">
+                                        <p>
+                                            ⚠️ Para más de 30L de una misma bebida te conviene una chopera más grande.{' '}
+                                            <a
+                                                href="https://wa.me/5493425521278?text=Hola%20👋%2C%20quiero%20consultar%20por%20mi%20pedido%20de%20barriles%20y%20chopera."
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-bold text-white underline hover:text-amber-200 transition-colors"
+                                            >
+                                                Consultanos 👉
+                                            </a>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="text-center text-slate-100 flex items-center justify-center flex-col min-h-[250px]">
@@ -449,12 +563,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                         )}
                     </div>
                     <div>
-                        {clarificationText && (
-                            <div className="text-xs text-center bg-black/20 p-3 rounded-lg text-emerald-100 mt-6">
-                                <p className="font-semibold">Aclaración:</p>
-                                <p>{clarificationText}</p>
-                            </div>
-                        )}
                         <div className="mt-6 flex flex-col gap-4">
                              <a
                                 href={whatsappLink}
