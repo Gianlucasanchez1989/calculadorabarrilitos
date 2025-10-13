@@ -5,15 +5,9 @@ export enum Drink {
   GIN = 'Gin',
 }
 
-export enum Season {
-  SPRING_SUMMER = 'Primavera/Verano',
-  AUTUMN_WINTER = 'Otoño/Invierno',
-}
-
 export interface FormData {
   attendees: number;
   drinks: Drink[];
-  season: Season;
 }
 
 export interface DrinkCalculation {

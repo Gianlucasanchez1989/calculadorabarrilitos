@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Drink, FormData, CalculationResult, Season, DrinkCalculation, ProductPrice } from '../types';
+import { Drink, FormData, CalculationResult, DrinkCalculation, ProductPrice } from '../types';
 import {
   LITERS_PER_PERSON,
-  SAFETY_MARGIN,
   BARREL_CAPACITY,
   DRINK_OPTIONS,
-  SEASON_OPTIONS,
-  WINTER_CONSUMPTION_MULTIPLIER,
   UsersIcon,
   DRINK_ICONS,
   MIN_ATTENDEES,
@@ -38,12 +35,40 @@ const ClipboardIcon = () => (
     </svg>
 );
 
+const StarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+);
+
+const calculationModeConfig = {
+    barrelOnly: {
+        icon: '🛢️',
+        title: 'Barril solo',
+        text: 'Solo la bebida, sin accesorios.',
+        tooltip: 'Incluye un barril listo para servir. No incluye canilla ni balde.',
+        dynamicText: 'Estás pidiendo solo los barriles, sin accesorios.',
+    },
+    kit: {
+        icon: '🎁',
+        title: 'Kit completo',
+        text: 'Todo lo que necesitás para servir y enfriar.',
+        tooltip: 'Incluye barril + canilla + balde + regalos.',
+        dynamicText: 'Cada kit incluye barril, canilla, balde y regalos.',
+    },
+    oneTapPerDrink: {
+        icon: '🍸',
+        title: 'Kit + barriles de recambio',
+        text: 'Un solo kit, con barriles extra por bebida.',
+        tooltip: 'Cada bebida tiene su propia canilla. Se cambian solo los barriles.',
+        dynamicText: 'Un kit principal y barriles adicionales, cada bebida con su propia canilla.',
+    }
+}
 
 const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   const [formData, setFormData] = useState<FormData>({
     attendees: MIN_ATTENDEES,
     drinks: [Drink.BEER],
-    season: Season.SPRING_SUMMER,
   });
   const [barrelDistribution, setBarrelDistribution] = useState<Record<Drink, number>>({
     [Drink.BEER]: 0,
@@ -96,7 +121,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   }, []);
 
   const totalBarrels = useMemo(() => {
-    const { attendees, drinks, season } = formData;
+    const { attendees, drinks } = formData;
 
     if (!attendees || attendees < MIN_ATTENDEES || drinks.length === 0) {
         setShowWarning(false);
@@ -104,14 +129,9 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
     }
 
     const avgLitersPerPerson = drinks.reduce((sum, d) => sum + LITERS_PER_PERSON[d], 0) / drinks.length;
-    let totalLiters = attendees * avgLitersPerPerson;
+    const totalLiters = attendees * avgLitersPerPerson;
 
-    if (season === Season.AUTUMN_WINTER) {
-      totalLiters *= WINTER_CONSUMPTION_MULTIPLIER;
-    }
-
-    const finalLitersWithMargin = totalLiters * SAFETY_MARGIN;
-    const calculatedBarrels = Math.ceil(finalLitersWithMargin / BARREL_CAPACITY);
+    const calculatedBarrels = Math.ceil(totalLiters / BARREL_CAPACITY);
     
     const minRequiredBarrels = drinks.length;
     if (calculatedBarrels > 0 && calculatedBarrels < minRequiredBarrels) {
@@ -159,6 +179,13 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
         setCalculationMode('kit');
     }
   }, [showOneTapPerDrinkOption, calculationMode]);
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numValue = parseInt(e.target.value, 10);
+    setFormData(prev => ({ ...prev, attendees: numValue }));
+    setAttendeesInput(numValue.toString());
+    setAttendeesError(null);
+  };
 
   const handleAttendeesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -321,7 +348,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   }, [formData.drinks, barrelDistribution, totalBarrels, prices, calculationMode]);
 
   const needsBiggerChopera = useMemo(() => {
-    // FIX: Explicitly type `barrels` as `number` to resolve a TypeScript type inference issue.
     return Object.values(barrelDistribution).some((barrels: number) => barrels > 3);
   }, [barrelDistribution]);
 
@@ -373,45 +399,46 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
         <h2 className="text-2xl font-bold text-slate-100">Armá tu calculo</h2>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-col space-y-2">
-                <label htmlFor="attendees" className="text-sm font-medium text-slate-300">Cantidad de personas</label>
-                <div className="relative mt-1">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                        <UsersIcon />
-                    </span>
-                    <input
-                        type="number"
-                        id="attendees"
-                        value={attendeesInput}
-                        onChange={handleAttendeesChange}
-                        onBlur={handleAttendeesBlur}
-                        onFocus={(e) => e.target.select()}
-                        className={`w-full pl-10 pr-4 py-2 bg-slate-700 border rounded-md shadow-sm transition ${attendeesError ? 'border-red-500 text-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-600 focus:ring-emerald-500 focus:border-emerald-500'}`}
-                        aria-invalid={!!attendeesError}
-                        aria-describedby="attendees-error"
-                    />
+                <div className="flex justify-between items-center">
+                    <label htmlFor="attendees-input" className="text-sm font-medium text-slate-300">Cantidad de personas</label>
+                    <div className="relative w-28">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <UsersIcon />
+                        </span>
+                        <input
+                            type="number"
+                            id="attendees-input"
+                            value={attendeesInput}
+                            onChange={handleAttendeesChange}
+                            onBlur={handleAttendeesBlur}
+                            onFocus={(e) => e.target.select()}
+                            className={`w-full pl-10 pr-2 py-2 text-center bg-slate-700 border rounded-md shadow-sm transition ${attendeesError ? 'border-red-500 text-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-600 focus:ring-emerald-500 focus:border-emerald-500'}`}
+                            aria-invalid={!!attendeesError}
+                            aria-describedby="attendees-error"
+                            min={MIN_ATTENDEES}
+                        />
+                    </div>
                 </div>
-                 {attendeesError && (
-                    <p id="attendees-error" className="text-xs text-red-400" role="alert">
+                <div className="pt-1">
+                    <input
+                        type="range"
+                        min={MIN_ATTENDEES}
+                        max={MAX_ATTENDEES_FOR_CALC}
+                        step="5"
+                        value={formData.attendees}
+                        onChange={handleSliderChange}
+                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
+                    />
+                    <div className="flex justify-between text-xs text-slate-400 mt-1">
+                        <span>{MIN_ATTENDEES}</span>
+                        <span>{MAX_ATTENDEES_FOR_CALC}</span>
+                    </div>
+                </div>
+                {attendeesError && (
+                    <p id="attendees-error" className="text-xs text-red-400 mt-1" role="alert">
                         {attendeesError}
                     </p>
                 )}
-            </div>
-
-            <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium text-slate-300">Época del año</label>
-                <p className="text-xs text-slate-400">El consumo varía en función de la temporada.</p>
-                <div className="grid grid-cols-2 gap-2">
-                    {SEASON_OPTIONS.map(season => (
-                        <button
-                            key={season}
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, season }))}
-                            className={`px-4 py-2 text-sm rounded-md transition duration-200 ${formData.season === season ? 'bg-sky-500 text-white font-semibold shadow-lg' : 'bg-slate-700 hover:bg-slate-600'}`}
-                        >
-                            {season}
-                        </button>
-                    ))}
-                </div>
             </div>
 
             <div className="flex flex-col space-y-4">
@@ -490,27 +517,39 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 </div>
 
                                 <div className="bg-black/20 p-4 rounded-lg space-y-3">
-                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex items-center">
-                                            <input type="radio" id="calcModeBarrel" name="calculationMode" value="barrelOnly" checked={calculationMode === 'barrelOnly'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
-                                            <label htmlFor="calcModeBarrel" className="ml-2 block text-slate-100">Barril solo</label>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <input type="radio" id="calcModeKit" name="calculationMode" value="kit" checked={calculationMode === 'kit'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
-                                            <label htmlFor="calcModeKit" className="ml-2 block text-slate-100">Kit completo(s)</label>
-                                        </div>
-                                        {showOneTapPerDrinkOption && (
-                                            <div className="flex items-center">
-                                                <input type="radio" id="calcModeOneTap" name="calculationMode" value="oneTapPerDrink" checked={calculationMode === 'oneTapPerDrink'} onChange={(e) => setCalculationMode(e.target.value as CalculationMode)} className="w-4 h-4 text-sky-500 bg-slate-600 border-slate-500 focus:ring-sky-600" />
-                                                <label htmlFor="calcModeOneTap" className="ml-2 block text-slate-100">Una canilla por bebida</label>
-                                            </div>
-                                        )}
+                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-3">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {(['barrelOnly', 'kit', 'oneTapPerDrink'] as CalculationMode[]).map(mode => {
+                                            if (mode === 'oneTapPerDrink' && !showOneTapPerDrinkOption) return null;
+                                            
+                                            const config = calculationModeConfig[mode];
+                                            const isSelected = calculationMode === mode;
+
+                                            return (
+                                                <div key={mode} className="relative group">
+                                                    <button 
+                                                        onClick={() => setCalculationMode(mode)}
+                                                        className={`w-full h-full text-left p-3 rounded-lg border-2 transition-all duration-200 flex flex-col ${isSelected ? 'bg-sky-500 border-sky-300' : 'bg-black/20 border-sky-800 hover:border-sky-600 hover:bg-black/30'}`}
+                                                    >
+                                                        <span className="text-lg">{config.icon}</span>
+                                                        <span className="font-bold text-sm mt-1">{config.title}</span>
+                                                        <span className="text-xs text-slate-300 mt-1">{config.text}</span>
+                                                    </button>
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-slate-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                                        {config.tooltip}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-
+                                
                                 <div className="bg-black/20 p-4 rounded-lg space-y-3">
-                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-2">Resumen del pedido</h3>
+                                    <div className="text-center pb-2 border-b border-white/10">
+                                        <p className="text-sm font-semibold text-emerald-200">Tu selección:</p>
+                                        <p className="text-xs text-slate-200">{calculationModeConfig[calculationMode].dynamicText}</p>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-center text-emerald-200">Resumen del pedido</h3>
                                     {calculationResult.breakdown.filter(({ barrels }) => barrels > 0).map(({ drink, barrels, subtotal, description }) => (
                                         <div key={drink} className="border-b border-white/10 pb-2 last:border-b-0 last:pb-0">
                                             <div className="flex justify-between items-center">
@@ -520,19 +559,17 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                                 </span>
                                             </div>
                                             <p className="text-xs text-sky-200 pl-7">{description}</p>
-                                            {description.toLowerCase().includes('kit') && (
-                                                <p className="text-xs text-emerald-300 pl-7 mt-1">Incluye: barril + canilla + colder + regalos</p>
-                                            )}
                                         </div>
                                     ))}
-
-                                     {calculationResult.isDiscountApplied && (
-                                        <div className="text-center pt-2">
-                                            <span className="text-sm font-bold text-emerald-300 bg-emerald-900/50 px-3 py-1 rounded-full">Descuento de kit completo aplicado ✅</span>
-                                        </div>
-                                    )}
                                 </div>
                                 
+                                {calculationResult.isDiscountApplied && (
+                                    <div className="flex items-center justify-center gap-2 text-sm text-emerald-200 bg-black/20 p-3 rounded-lg">
+                                        <StarIcon />
+                                        <span className="font-semibold">¡Descuento por kit completo aplicado!</span>
+                                    </div>
+                                )}
+
                                 <div className="text-center bg-black/30 p-4 rounded-lg">
                                     <p className="text-lg text-sky-100">Precio total estimado:</p>
                                     <p className="text-4xl font-extrabold tracking-tighter my-1">
