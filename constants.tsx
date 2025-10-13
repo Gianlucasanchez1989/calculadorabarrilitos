@@ -19,6 +19,15 @@ export const BARREL_CAPACITY = 10; // 10 liters
 export const MIN_ATTENDEES = 5;
 export const MAX_ATTENDEES_FOR_CALC = 100;
 
+/**
+ * Rango de personas estimadas que beben de un barril de 10L, por tipo de bebida.
+ */
+export const PEOPLE_PER_BARREL: { [key in Drink]: { min: number; max: number } } = {
+    [Drink.BEER]: { min: 5, max: 8 },
+    [Drink.FERNET]: { min: 6, max: 10 },
+    [Drink.GIN]: { min: 8, max: 10 },
+};
+
 
 // --- Form Options ---
 

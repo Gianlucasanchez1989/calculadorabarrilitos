@@ -8,6 +8,7 @@ import {
   DRINK_ICONS,
   MIN_ATTENDEES,
   MAX_ATTENDEES_FOR_CALC,
+  PEOPLE_PER_BARREL,
 } from '../constants';
 
 interface CalculatorProps {
@@ -515,6 +516,40 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                     <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
                                     <p className="text-xl font-bold text-sky-100">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
                                 </div>
+
+                                {calculationResult && calculationResult.breakdown.some(item => item.barrels > 0) && (
+                                    <div className="text-center bg-black/20 p-3 rounded-lg text-sm text-slate-300">
+                                        <p>
+                                            {(() => {
+                                                const drinksWithBarrels = calculationResult.breakdown.filter(item => item.barrels > 0);
+                                                if (drinksWithBarrels.length === 0) return null;
+
+                                                let totalMinPeople = 0;
+                                                let totalMaxPeople = 0;
+                                                
+                                                drinksWithBarrels.forEach(item => {
+                                                    const range = PEOPLE_PER_BARREL[item.drink];
+                                                    totalMinPeople += item.barrels * range.min;
+                                                    totalMaxPeople += item.barrels * range.max;
+                                                });
+
+                                                if (calculationResult.totalBarrels === 1) {
+                                                    return (
+                                                        <>
+                                                            Con 1 barril, disfrutan entre <strong>{totalMinPeople}</strong> y <strong>{totalMaxPeople}</strong> personas, según el consumo del grupo.
+                                                        </>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <>
+                                                        Con {calculationResult.totalBarrels} barriles, disfrutan entre <strong>{totalMinPeople}</strong> y <strong>{totalMaxPeople}</strong> personas, según el consumo del grupo.
+                                                    </>
+                                                );
+                                            })()}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className="bg-black/20 p-4 rounded-lg space-y-3">
                                     <h3 className="text-lg font-semibold text-center text-emerald-200 mb-3">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
