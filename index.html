@@ -42,5 +42,22 @@
   <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+    <script>
+document.querySelectorAll('button, a').forEach(el => {
+  el.addEventListener('click', e => {
+    const texto = (e.target.innerText || e.target.value || '').toLowerCase();
+    if (texto.includes('whatsapp') || texto.includes('instagram') || texto.includes('copiar')) {
+      let tipo = 'otro';
+      if (texto.includes('whatsapp')) tipo = 'whatsapp';
+      else if (texto.includes('instagram')) tipo = 'instagram';
+      else if (texto.includes('copiar')) tipo = 'copiar_pedido';
+      gtag('event', 'boton_pedido_click', {
+        'button_type': tipo,
+        'button_text': texto
+      });
+    }
+  });
+});
+</script>
   </body>
 </html>
