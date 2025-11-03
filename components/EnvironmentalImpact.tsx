@@ -8,10 +8,10 @@ interface ImpactCardProps {
 }
 
 const ImpactCard: React.FC<ImpactCardProps> = ({ title, value, colorClasses, description }) => (
-    <div className={`p-6 rounded-2xl shadow-2xl text-center border ${colorClasses}`}>
-        <p className="font-bold text-lg">{title}</p>
-        <p className="text-5xl font-extrabold my-2 text-white">{value}</p>
-        <p className="text-sm opacity-80">{description}</p>
+    <div className={`p-6 rounded-2xl shadow-lg text-center border bg-white ${colorClasses}`}>
+        <p className="font-bold text-lg text-[var(--text)]">{title}</p>
+        <p className="text-5xl font-extrabold my-2">{value}</p>
+        <p className="text-sm opacity-80 text-[var(--text)]">{description}</p>
     </div>
 );
 
@@ -35,8 +35,8 @@ const EnvironmentalImpact: React.FC<EnvironmentalImpactProps> = ({ totalBarrels 
     const description = isCalculated ? "kg CO₂ en total" : "kg CO₂ / 10 L";
 
     return (
-        <section className="mt-16 text-slate-300">
-            <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-500 mb-8">
+        <section className="mt-16 text-[var(--text)]">
+            <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] mb-8">
                 El Planeta te lo agradece
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -44,22 +44,22 @@ const EnvironmentalImpact: React.FC<EnvironmentalImpactProps> = ({ totalBarrels 
                     title="Barril" 
                     value={barrelValue} 
                     description={description}
-                    colorClasses="bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                    colorClasses="border-[var(--primary)] text-[var(--primary)]"
                 />
                  <ImpactCard 
                     title="Lata" 
                     value={canValue} 
                     description={description}
-                    colorClasses="bg-yellow-500/10 border-yellow-500 text-yellow-400"
+                    colorClasses="border-[var(--accent)] text-[var(--accent)]"
                 />
                  <ImpactCard 
                     title="Vidrio" 
                     value={glassValue} 
                     description={description}
-                    colorClasses="bg-red-500/10 border-red-500 text-red-400"
+                    colorClasses="border-slate-400 text-slate-500"
                 />
             </div>
-            <p className="text-center text-slate-400 mt-8 max-w-3xl mx-auto">
+            <p className="text-center text-[var(--text)] opacity-70 mt-8 max-w-3xl mx-auto">
                 La huella de CO₂ es la cantidad de gases que se generan al producir y transportar tu bebida. Elegir barriles reduce hasta un 60% el impacto en comparación con latas o vidrio. 🌍💚
             </p>
         </section>

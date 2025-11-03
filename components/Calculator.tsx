@@ -11,10 +11,6 @@ import {
   PEOPLE_PER_BARREL,
 } from '../constants';
 
-interface CalculatorProps {
-  onTotalBarrelsChange: (barrels: number) => void;
-}
-
 type CalculationMode = 'oneTapPerDrink' | 'kit' | 'barrelOnly';
 
 const WhatsAppIcon = () => (
@@ -66,7 +62,7 @@ const calculationModeConfig = {
     }
 }
 
-const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
+const Calculator: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     attendees: MIN_ATTENDEES,
     drinks: [Drink.BEER],
@@ -143,10 +139,6 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
     setShowWarning(false);
     return calculatedBarrels;
   }, [formData]);
-  
-  useEffect(() => {
-    onTotalBarrelsChange(totalBarrels);
-  }, [totalBarrels, onTotalBarrelsChange]);
 
   const distributeBarrelsEqually = useCallback((drinks: Drink[], total: number) => {
     const newDistribution: Record<Drink, number> = {
@@ -396,12 +388,12 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:items-start">
       {/* Form Section */}
-      <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-slate-700 space-y-6">
-        <h2 className="text-2xl font-bold text-slate-100">Armá tu calculo</h2>
+      <div className="bg-white p-6 rounded-2xl shadow-xl border border-[var(--secondary)] space-y-6">
+        <h2 className="text-2xl font-bold text-[var(--text)]">Armá tu calculo</h2>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-col space-y-2">
                 <div className="flex justify-between items-center">
-                    <label htmlFor="attendees-input" className="text-sm font-medium text-slate-300">Cantidad de personas</label>
+                    <label htmlFor="attendees-input" className="text-sm font-medium text-[var(--text)]">Cantidad de personas</label>
                     <div className="relative w-28">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <UsersIcon />
@@ -413,7 +405,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                             onChange={handleAttendeesChange}
                             onBlur={handleAttendeesBlur}
                             onFocus={(e) => e.target.select()}
-                            className={`w-full pl-10 pr-2 py-2 text-center bg-slate-700 border rounded-md shadow-sm transition ${attendeesError ? 'border-red-500 text-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-600 focus:ring-emerald-500 focus:border-emerald-500'}`}
+                            className={`w-full pl-10 pr-2 py-2 text-center bg-[var(--secondary)] border rounded-md shadow-sm transition ${attendeesError ? 'border-red-500 text-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[var(--primary)]/50 focus:ring-[var(--primary)] focus:border-[var(--primary)]'}`}
                             aria-invalid={!!attendeesError}
                             aria-describedby="attendees-error"
                             min={MIN_ATTENDEES}
@@ -428,29 +420,29 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                         step="5"
                         value={formData.attendees}
                         onChange={handleSliderChange}
-                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
+                        className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-[var(--primary)] [&::-webkit-slider-thumb]:rounded-full"
                     />
-                    <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <div className="flex justify-between text-xs text-[var(--text)]/70 mt-1">
                         <span>{MIN_ATTENDEES}</span>
                         <span>{MAX_ATTENDEES_FOR_CALC}</span>
                     </div>
                 </div>
                 {attendeesError && (
-                    <p id="attendees-error" className="text-xs text-red-400 mt-1" role="alert">
+                    <p id="attendees-error" className="text-xs text-red-600 mt-1" role="alert">
                         {attendeesError}
                     </p>
                 )}
             </div>
 
             <div className="flex flex-col space-y-4">
-                <label className="text-sm font-medium text-slate-300">Tipo de bebida</label>
+                <label className="text-sm font-medium text-[var(--text)]">Tipo de bebida</label>
                  <div className="grid grid-cols-3 gap-2">
                     {DRINK_OPTIONS.map(drink => (
                         <button
                             key={drink}
                             type="button"
                             onClick={() => handleDrinkChange(drink)}
-                            className={`px-4 py-2 text-sm rounded-md transition duration-200 flex items-center justify-center gap-2 ${formData.drinks.includes(drink) ? 'bg-sky-500 text-white font-semibold shadow-lg' : 'bg-slate-700 hover:bg-slate-600'}`}
+                            className={`px-4 py-2 text-sm rounded-md transition duration-200 flex items-center justify-center gap-2 ${formData.drinks.includes(drink) ? 'bg-[var(--primary)] text-white font-semibold shadow-lg' : 'bg-[var(--secondary)] text-[var(--text)] hover:bg-[var(--primary)]/20'}`}
                         >
                             {DRINK_ICONS[drink]} {drink}
                         </button>
@@ -459,13 +451,13 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
             </div>
 
             {formData.drinks.length > 1 && totalBarrels > 0 && !isEventTooLarge && (
-                 <div className="bg-slate-900/50 p-4 rounded-lg space-y-4">
+                 <div className="bg-[var(--secondary)]/50 p-4 rounded-lg space-y-4">
                     <div className="flex justify-between items-center">
-                         <p className="text-sm font-medium text-slate-300">Distribución de barriles</p>
-                         <button type="button" onClick={() => distributeBarrelsEqually(formData.drinks, totalBarrels)} className="text-xs bg-emerald-500 text-white font-semibold rounded-md px-3 py-1 hover:bg-emerald-600 transition">Repartir parejo</button>
+                         <p className="text-sm font-medium text-[var(--text)]">Distribución de barriles</p>
+                         <button type="button" onClick={() => distributeBarrelsEqually(formData.drinks, totalBarrels)} className="text-xs bg-[var(--accent)] text-white font-semibold rounded-md px-3 py-1 hover:bg-[var(--accent)]/90 transition">Repartir parejo</button>
                     </div>
                      {showWarning && (
-                        <div className="bg-amber-900/50 border border-amber-700 text-amber-200 text-xs rounded-md p-3">
+                        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 text-xs rounded-md p-3">
                             <p>⚠️ Atención: Con esta cantidad de asistentes, un barril por bebida es demasiado. ¡Podrías reducir un poco y ahorrar para la próxima!</p>
                         </div>
                     )}
@@ -477,8 +469,8 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                 <span className="text-2xl">{DRINK_ICONS[drink]}</span>
                                 <div className="flex-1">
                                     <div className="flex justify-between text-sm mb-1">
-                                        <span className="font-medium text-slate-300">{drink}</span>
-                                        <span className="font-bold text-emerald-400">{barrelDistribution[drink] || 0} {(barrelDistribution[drink] || 0) === 1 ? 'barril' : 'barriles'}</span>
+                                        <span className="font-medium text-[var(--text)]">{drink}</span>
+                                        <span className="font-bold text-[var(--primary)]">{barrelDistribution[drink] || 0} {(barrelDistribution[drink] || 0) === 1 ? 'barril' : 'barriles'}</span>
                                     </div>
                                     <input
                                         type="range"
@@ -487,7 +479,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                         step="1"
                                         value={barrelDistribution[drink] || 0}
                                         onChange={(e) => handleBarrelChange(drink, parseInt(e.target.value, 10))}
-                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
+                                        className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-[var(--primary)] [&::-webkit-slider-thumb]:rounded-full"
                                     />
                                 </div>
                             </div>
@@ -499,7 +491,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
       </div>
 
       {/* Results Section */}
-       <div className="bg-gradient-to-br from-emerald-500 to-sky-600 p-6 rounded-2xl shadow-2xl flex flex-col justify-between text-white">
+       <div className="bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] p-6 rounded-2xl shadow-2xl flex flex-col justify-between text-white">
             {isEventTooLarge ? (
                 <div className="text-center my-auto">
                     <p className="text-2xl mb-4">🚨 Tu evento es grande 🚀</p>
@@ -511,14 +503,14 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                         <h2 className="text-2xl font-bold text-center mb-4">Resultado de la estimación</h2>
                         {calculationResult ? (
                             <div className="space-y-4">
-                                <div className="text-center bg-black/30 p-4 rounded-lg">
-                                    <p className="text-lg text-sky-100">Vas a necesitar aproximadamente:</p>
+                                <div className="text-center bg-white/20 p-4 rounded-lg">
+                                    <p className="text-lg text-white/90">Vas a necesitar aproximadamente:</p>
                                     <p className="text-6xl font-extrabold tracking-tighter my-1">{calculationResult.totalBarrels}</p>
-                                    <p className="text-xl font-bold text-sky-100">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
+                                    <p className="text-xl font-bold text-white/90">{calculationResult.totalBarrels === 1 ? 'Barril' : 'Barriles'} de 10 L</p>
                                 </div>
 
                                 {calculationResult && calculationResult.breakdown.some(item => item.barrels > 0) && (
-                                    <div className="text-center bg-black/20 p-3 rounded-lg text-sm text-slate-300">
+                                    <div className="text-center bg-white/10 p-3 rounded-lg text-sm text-[var(--secondary)]">
                                         <p>
                                             {(() => {
                                                 const drinksWithBarrels = calculationResult.breakdown.filter(item => item.barrels > 0);
@@ -536,14 +528,14 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                                 if (calculationResult.totalBarrels === 1) {
                                                     return (
                                                         <>
-                                                            Con 1 barril, disfrutan entre <strong>{totalMinPeople}</strong> y <strong>{totalMaxPeople}</strong> personas, según el consumo del grupo.
+                                                            Con 1 barril, disfrutan entre <strong className="text-white">{totalMinPeople}</strong> y <strong className="text-white">{totalMaxPeople}</strong> personas, según el consumo del grupo.
                                                         </>
                                                     );
                                                 }
 
                                                 return (
                                                     <>
-                                                        Con {calculationResult.totalBarrels} barriles, disfrutan entre <strong>{totalMinPeople}</strong> y <strong>{totalMaxPeople}</strong> personas, según el consumo del grupo.
+                                                        Con {calculationResult.totalBarrels} barriles, disfrutan entre <strong className="text-white">{totalMinPeople}</strong> y <strong className="text-white">{totalMaxPeople}</strong> personas, según el consumo del grupo.
                                                     </>
                                                 );
                                             })()}
@@ -551,8 +543,8 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                     </div>
                                 )}
 
-                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
-                                    <h3 className="text-lg font-semibold text-center text-emerald-200 mb-3">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
+                                <div className="bg-white/15 p-4 rounded-lg space-y-3">
+                                    <h3 className="text-lg font-semibold text-center text-white mb-3">¡Arma tu pedido! Elegí cómo querés tu bebida.</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         {(['barrelOnly', 'kit', 'oneTapPerDrink'] as CalculationMode[]).map(mode => {
                                             if (mode === 'oneTapPerDrink' && !showOneTapPerDrinkOption) return null;
@@ -564,13 +556,13 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                                 <div key={mode} className="relative group">
                                                     <button 
                                                         onClick={() => setCalculationMode(mode)}
-                                                        className={`w-full h-full text-left p-3 rounded-lg border-2 transition-all duration-200 flex flex-col ${isSelected ? 'bg-sky-500 border-sky-300' : 'bg-black/20 border-sky-800 hover:border-sky-600 hover:bg-black/30'}`}
+                                                        className={`w-full h-full text-left p-3 rounded-lg border-2 transition-all duration-200 flex flex-col ${isSelected ? 'bg-[var(--accent)] border-white/80' : 'bg-white/15 border-transparent hover:border-white/50 hover:bg-white/20'}`}
                                                     >
                                                         <span className="text-lg">{config.icon}</span>
                                                         <span className="font-bold text-sm mt-1">{config.title}</span>
-                                                        <span className="text-xs text-slate-300 mt-1">{config.text}</span>
+                                                        <span className="text-xs text-slate-100 mt-1">{config.text}</span>
                                                     </button>
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-slate-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 text-xs text-center text-white bg-[var(--text)] rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                                         {config.tooltip}
                                                     </div>
                                                 </div>
@@ -579,12 +571,12 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                     </div>
                                 </div>
                                 
-                                <div className="bg-black/20 p-4 rounded-lg space-y-3">
+                                <div className="bg-white/15 p-4 rounded-lg space-y-3">
                                     <div className="text-center pb-2 border-b border-white/10">
-                                        <p className="text-sm font-semibold text-emerald-200">Tu selección:</p>
+                                        <p className="text-sm font-semibold text-white">Tu selección:</p>
                                         <p className="text-xs text-slate-200">{calculationModeConfig[calculationMode].dynamicText}</p>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-center text-emerald-200">Resumen del pedido</h3>
+                                    <h3 className="text-lg font-semibold text-center text-white">Resumen del pedido</h3>
                                     {calculationResult.breakdown.filter(({ barrels }) => barrels > 0).map(({ drink, barrels, subtotal, description }) => (
                                         <div key={drink} className="border-b border-white/10 pb-2 last:border-b-0 last:pb-0">
                                             <div className="flex justify-between items-center">
@@ -593,34 +585,34 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                                                     {subtotal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-sky-200 pl-7">{description}</p>
+                                            <p className="text-xs text-slate-200/90 pl-7">{description}</p>
                                         </div>
                                     ))}
                                 </div>
                                 
                                 {calculationResult.isDiscountApplied && (
-                                    <div className="flex items-center justify-center gap-2 text-sm text-emerald-200 bg-black/20 p-3 rounded-lg">
+                                    <div className="flex items-center justify-center gap-2 text-sm text-white bg-white/20 p-3 rounded-lg">
                                         <StarIcon />
                                         <span className="font-semibold">¡Descuento por kit completo aplicado!</span>
                                     </div>
                                 )}
 
-                                <div className="text-center bg-black/30 p-4 rounded-lg">
-                                    <p className="text-lg text-sky-100">Precio total estimado:</p>
+                                <div className="text-center bg-white/20 p-4 rounded-lg">
+                                    <p className="text-lg text-white/90">Precio total estimado:</p>
                                     <p className="text-4xl font-extrabold tracking-tighter my-1">
                                         {calculationResult.totalPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })}
                                     </p>
                                 </div>
 
                                 {needsBiggerChopera && (
-                                     <div className="mt-4 bg-amber-800/60 border border-amber-600 text-amber-100 text-sm rounded-lg p-4 text-center">
+                                     <div className="mt-4 bg-yellow-500/90 border border-yellow-600 text-white text-sm rounded-lg p-4 text-center">
                                         <p>
                                             ⚠️ Para más de 30L de una misma bebida te conviene una chopera más grande.{' '}
                                             <a
                                                 href="https://wa.me/5493425521278?text=Hola%20👋%2C%20quiero%20consultar%20por%20mi%20pedido%20de%20barriles%20y%20chopera."
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="font-bold text-white underline hover:text-amber-200 transition-colors"
+                                                className="font-bold underline hover:opacity-80 transition-opacity"
                                             >
                                                 Consultanos 👉
                                             </a>
@@ -657,7 +649,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onTotalBarrelsChange }) => {
                              <button
                                 onClick={handleCopyClick}
                                 disabled={!orderText || isCopied}
-                                className="flex items-center justify-center gap-3 w-full bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700"
+                                className="flex items-center justify-center gap-3 w-full bg-white/30 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/40"
                             >
                                 <ClipboardIcon />
                                 <span>{isCopied ? 'Pedido copiado ✅' : 'Copiar pedido'}</span>
